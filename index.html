@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IVAO Online Days Rechner</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: linear-gradient(135deg, #ddefff 0%, #f5f9ff 100%);
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: #1c1c1e;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.8);
+      padding: 2rem;
+      border-radius: 1rem;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+    h1 {
+      text-align: center;
+      color: #0a84ff;
+      margin-bottom: 2rem;
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 0.6rem;
+      border-radius: 0.5rem;
+      border: 1px solid #ccc;
+      margin-top: 0.3rem;
+    }
+    button {
+      margin-top: 1.5rem;
+      width: 100%;
+      padding: 0.8rem;
+      font-size: 1rem;
+      background-color: #0a84ff;
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+    }
+    .output {
+      margin-top: 2rem;
+      text-align: center;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>IVAO Online Days Rechner</h1>
+
+    <label for="currentDays">Bisherige Online Days (z. B. 58,5)</label>
+    <input type="number" step="0.1" id="currentDays" value="12">
+
+    <label for="targetDays">Ziel: z. B. 75 Online Days</label>
+    <input type="number" step="0.1" id="targetDays" value="75">
+
+    <button onclick="calculate()">📊 Berechnen</button>
+
+    <div class="output" id="output"></div>
+  </div>
+
+  <script>
+    function nextTuesday(fromDate) {
+      const result = new Date(fromDate);
+      const day = result.getDay();
+      const diff = (day <= 2) ? (2 - day) : (9 - day);
+      result.setDate(result.getDate() + diff);
+      return result;
+    }
+
+    function calculate() {
+      const currentInput = document.getElementById("currentDays").value.trim();
+      const targetInput = document.getElementById("targetDays").value.trim();
+
+      if (!currentInput || !targetInput) {
+        document.getElementById("output").innerHTML = "";
+        return;
+      }
+
+      const current = parseFloat(currentInput.replace(',', '.')) || 0;
+      const target = parseFloat(targetInput.replace(',', '.')) || 75;
+      let remaining = target - current;
+
+      if (remaining <= 0) {
+        document.getElementById("output").innerHTML = `🎉 Du hast dein Ziel bereits erreicht!`;
+        return;
+      }
+
+      const tuesdaysNeeded = Math.ceil(remaining);
+
+      const today = new Date();
+      const firstTuesday = nextTuesday(today);
+
+      const targetDate = new Date(firstTuesday);
+      targetDate.setDate(targetDate.getDate() + (tuesdaysNeeded - 1) * 7);
+
+      const output = document.getElementById("output");
+      output.innerHTML = `
+        ⏳ Es fehlen noch <strong>${remaining.toFixed(1).replace('.', ',')}</strong> Punkte.<br>
+        📆 Das bedeutet: <strong>${tuesdaysNeeded}</strong> verbleibende Dienstage<br>
+        📅 Voraussichtlicher Ziel-Termin: <strong>${targetDate.toLocaleDateString('de-DE', {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        })}</strong>
+      `;
+
+      localStorage.setItem('ivaoODays', JSON.stringify({ current, target }));
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const saved = JSON.parse(localStorage.getItem("ivaoODays"));
+      if (saved) {
+        document.getElementById("currentDays").value = saved.current.toString().replace('.', ',');
+        document.getElementById("targetDays").value = saved.target.toString().replace('.', ',');
+        calculate();
+      }
+    });
+  </script>
+</body>
+</html>
